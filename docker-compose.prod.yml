@@ -16,17 +16,35 @@ services:
     depends_on:
       - db
 
+  celery:
+    build: 
+      context: './src'
+      dockerfile: Dockerfile.prod
+    command: celery --app config worker -l INFO
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - db
+      - redis
+
   db:
     image: postgres:14-alpine
     volumes:
       - pg-data:/var/lib/postgresql/data/
     env_file:
       - ./.env.prod.db
+  
+  redis:
+    image: redis:6.2.6-alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
 
   nginx:
     build: ./nginx
     ports:
-      - 1337:80
+      - 8000:80
     volumes:
       - static_volume:/django/static
       - media_volume:/django/media
@@ -35,5 +53,6 @@ services:
 
 volumes:
   pg-data:
+  redis-data:
   static_volume:
   media_volume:
