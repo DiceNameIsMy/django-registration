@@ -35,7 +35,7 @@ class LoginSerializer(serializers.Serializer):
             'refresh': str(token),
             'access': str(token.access_token),
         }
-    
+
     def get_verification_token(self) -> dict:
         token = VerificationToken.for_user(self._user)
         return {
@@ -45,7 +45,8 @@ class LoginSerializer(serializers.Serializer):
 
 
 class LoginVerifySerializer(serializers.Serializer):
-    """ Two factor authentication code serializer """
+    """Two factor authentication code serializer"""
+
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     code = serializers.CharField()
 
@@ -56,7 +57,7 @@ class LoginVerifySerializer(serializers.Serializer):
             raise serializers.ValidationError('Invalid code')
 
         return attrs
-    
+
     def get_token_pair(self) -> dict:
         token = RefreshToken.for_user(self.validated_data['user'])
         return {

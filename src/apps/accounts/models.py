@@ -20,9 +20,8 @@ class CustomUser(AbstractUser):
         verbose_name_plural = 'Users'
 
     def __str__(self) -> str:
-        return self.username    
+        return self.username
 
     def sms_user(self, message):
         """Send SMS to user"""
         # TODO: Implement
-    
