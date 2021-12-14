@@ -1,5 +1,5 @@
 #!/bin/sh
 
-python manage.py migrate --no-input
+poetry run python manage.py migrate --no-input
 
 exec "$@"

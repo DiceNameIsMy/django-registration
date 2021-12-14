@@ -1,33 +1,7 @@
-###########
-# BUILDER #
-###########
-
-# pull official base image
-FROM python:3.9.7-slim as builder
-
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# set work directory
-WORKDIR /usr/src/app
+FROM python:3.9.7-slim
 
 # install psycopg2 dependencies
-RUN apt-get update \
-    && apt-get -y install libpq-dev gcc 
-
-# install dependencies
-COPY ./requirements.txt .
-RUN pip install --upgrade pip
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
-
-
-#########
-# FINAL #
-#########
-
-# pull official base image
-FROM python:3.9.7-slim
+RUN apt update && apt install libpq-dev gcc -y -q
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -37,18 +11,14 @@ ENV APP_HOME=/django
 ENV ENTRYPOINT="entrypoint.prod.sh"
 ENV ENTRYPOINT_DIR="${APP_HOME}/${ENTRYPOINT}"
 
-# create venv & use as default
-ENV VENV_DIR=/venv
-RUN python -m venv $VENV_DIR
-ENV PATH="$VENV_DIR/bin:$PATH"
-
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apt update && apt install libpq-dev gcc -y -q
-COPY --from=builder /usr/src/app/wheels /wheels
-COPY --from=builder /usr/src/app/requirements.txt .
-RUN pip install --upgrade pip wheel && pip install --no-cache /wheels/*
+ADD poetry.lock pyproject.toml ./
+
+RUN pip install --upgrade pip poetry
+RUN poetry config virtualenvs.in-project true
+RUN poetry install
 
 # copy entrypoint.prod.sh
 ADD ./${ENTRYPOINT} .
@@ -58,7 +28,7 @@ RUN chmod +x $ENTRYPOINT_DIR
 # copy project
 COPY . $APP_HOME
 
-RUN python manage.py collectstatic --no-input
+RUN poetry run python manage.py collectstatic --no-input
 
 # create the app user & permit to use app files
 RUN addgroup app && useradd -g app app

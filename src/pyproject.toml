@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "django-registration"
+version = "0.1.0"
+description = ""
+authors = ["DiceNameIsMy <dicenameismy@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Django = "^4.0"
+djangorestframework = "^3.13.0"
+celery = "^5.2.1"
+psycopg2 = "^2.9.2"
+djangorestframework-simplejwt = "^5.0.0"
+gunicorn = "^20.1.0"
+django-cors-headers = "^3.10.1"
+redis = "^4.0.2"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+black = "^21.12b0"
+pre-commit = "^2.16.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
