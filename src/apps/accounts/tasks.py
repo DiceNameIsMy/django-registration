@@ -10,6 +10,7 @@ from .models import CustomUser
 cache = caches['default']
 
 
+# TODO probly separate to sign-up and sign-in tasks
 @celery_app.task()
 def send_verification_code(user_id: int) -> bool:
     user: CustomUser = CustomUser.objects.filter(id=user_id).first()

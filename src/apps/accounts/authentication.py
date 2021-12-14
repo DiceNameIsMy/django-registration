@@ -1,5 +1,6 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .tokens import VerificationToken
 
@@ -19,3 +20,20 @@ class VerificationJWTAuthentication(JWTAuthentication):
                     },
                 }
             )
+
+
+# Common token related functions
+def get_token_pair(user) -> dict:
+    token = RefreshToken.for_user(user)
+    return {
+        'refresh': str(token),
+        'access': str(token.access_token),
+    }
+
+
+def get_verification_token(user) -> dict:
+    token = VerificationToken.for_user(user)
+    return {
+        'method': user.two_fa_type,
+        'verfication': str(token),
+    }

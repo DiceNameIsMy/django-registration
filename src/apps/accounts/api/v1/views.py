@@ -8,7 +8,7 @@ from rest_framework import status
 from apps.accounts.authentication import VerificationJWTAuthentication
 from apps.accounts.tasks import send_verification_code
 
-from .serializers import LoginSerializer, LoginVerifySerializer
+from .serializers import LoginSerializer, VerifyCodeSerializer, SignupSerializer
 
 
 class LoginView(GenericAPIView):
@@ -21,7 +21,7 @@ class LoginView(GenericAPIView):
         # TODO check if user can ask to resend code
 
         if user.two_fa_enabled:
-            send_verification_code.delay(user.id)
+            send_verification_code.delay(user.pk)
             return Response(serializer.get_verification_token(), status=status.HTTP_201_CREATED)
         else:
             update_last_login(None, user)
@@ -32,11 +32,38 @@ class LoginVerifyView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (VerificationJWTAuthentication, )
 
-    serializer_class = LoginVerifySerializer
+    serializer_class = VerifyCodeSerializer
 
     def post(self, request):
-        serializer: LoginVerifySerializer = self.get_serializer(data=request.data)
+        serializer: VerifyCodeSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         update_last_login(None, request.user)
+        return Response(serializer.get_token_pair(), status=status.HTTP_200_OK)
+
+
+class SignupView(GenericAPIView):
+    serializer_class = SignupSerializer
+
+    def post(self, request):
+        serializer: SignupSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        send_verification_code.delay(user.pk)
+        return Response(serializer.get_verification_token(), status=status.HTTP_201_CREATED)
+
+
+class SignupVerifyView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (VerificationJWTAuthentication, )
+
+    serializer_class = VerifyCodeSerializer
+
+    def post(self, request):
+        serializer: VerifyCodeSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request.user.verify_user()
+
         return Response(serializer.get_token_pair(), status=status.HTTP_200_OK)

@@ -4,14 +4,14 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import LoginView, LoginVerifyView
+from .views import LoginView, LoginVerifyView, SignupVerifyView, SignupView
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('login/verify/', LoginVerifyView.as_view(), name='login-verify'),
 
-    # signup
-    # confirm registration by verification code
+    path('signup/', SignupView.as_view(), name='signup'),
+    path('signup/verify/', SignupVerifyView.as_view(), name='signup'),
 
     # !idea: require secret question and answer to reset password
 
