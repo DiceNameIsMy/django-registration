@@ -10,7 +10,7 @@ class CustomUser(AbstractUser):
     phone = models.CharField(max_length=20, blank=True)
 
     two_fa_enabled = models.BooleanField(default=False)
-    two_fa_type = models.PositiveSmallIntegerField(choices=TwoFAType.choices, null=True)
+    two_fa_type = models.PositiveSmallIntegerField(choices=TwoFAType.choices, null=True, blank=True)
 
     REQUIRED_FIELDS = ['email', 'phone']
 
