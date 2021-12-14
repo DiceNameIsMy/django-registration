@@ -100,6 +100,7 @@ class SignupSerializer(serializers.Serializer):
         user_kwargs = {
             'username': self.validated_data['username'],
             'password': self.validated_data['password1'],
+            'two_fa_enabled': True,
             **kwargs,
         }
         if self.validated_data.get('email'):
