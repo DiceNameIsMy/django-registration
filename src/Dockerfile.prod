@@ -22,7 +22,7 @@ ADD poetry.lock pyproject.toml ./
 
 RUN pip install --upgrade pip poetry --no-cache
 RUN poetry config virtualenvs.in-project true
-RUN poetry install
+RUN poetry install --no-dev
 
 # copy entrypoint.prod.sh
 ADD ./${ENTRYPOINT} .
