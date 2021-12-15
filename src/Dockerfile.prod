@@ -13,10 +13,14 @@ ENV ENTRYPOINT_DIR="${APP_HOME}/${ENTRYPOINT}"
 
 WORKDIR $APP_HOME
 
+# create the app user & permit to use app files
+RUN addgroup app && useradd -g app app
+RUN chown -R app:app $APP_HOME
+
 # install dependencies
 ADD poetry.lock pyproject.toml ./
 
-RUN pip install --upgrade pip poetry
+RUN pip install --upgrade pip poetry --no-cache
 RUN poetry config virtualenvs.in-project true
 RUN poetry install
 
@@ -28,13 +32,10 @@ RUN chmod +x $ENTRYPOINT_DIR
 # copy project
 COPY . $APP_HOME
 
+# collect static files for nginx
 RUN poetry run python manage.py collectstatic --no-input
 
-# create the app user & permit to use app files
-RUN addgroup app && useradd -g app app
-RUN chown -R app:app $APP_HOME
-
-# change to the app user
+# change user
 USER app
 
 # run entrypoint.prod.sh

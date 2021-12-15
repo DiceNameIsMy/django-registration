@@ -16,7 +16,7 @@ WORKDIR $APP_HOME
 # install dependencies
 ADD poetry.lock pyproject.toml ./
 
-RUN pip install --upgrade pip poetry
+RUN pip install --upgrade pip poetry --no-cache
 RUN poetry config virtualenvs.in-project true
 RUN poetry install
 
