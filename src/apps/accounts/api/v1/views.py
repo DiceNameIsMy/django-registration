@@ -1,14 +1,15 @@
 from django.contrib.auth.models import update_last_login
 
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
 
 from apps.accounts.authentication import VerificationJWTAuthentication
+from apps.accounts.models import CustomUser
 from apps.accounts.tasks import send_verification_code
 
-from .serializers import LoginSerializer, VerifyCodeSerializer, SignupSerializer
+from .serializers import LoginSerializer, ProfileSerializer, VerifyCodeSerializer, SignupSerializer
 
 
 class LoginView(GenericAPIView):
@@ -18,7 +19,6 @@ class LoginView(GenericAPIView):
         serializer: LoginSerializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.get_user()
-        # TODO check if user can ask to resend code
 
         if user.two_fa_enabled:
             send_verification_code.delay(user.pk)
@@ -26,6 +26,19 @@ class LoginView(GenericAPIView):
         else:
             update_last_login(None, user)
             return Response(serializer.get_token_pair(), status=status.HTTP_200_OK)
+
+
+# TODO implement sending verification code with
+# differend templates according to the code type
+class ResendVerificationCodeView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (VerificationJWTAuthentication,)
+
+    def post(self, request):
+        # TODO check if user can ask to resend code
+
+        send_verification_code.delay(request.user.pk)
+        return Response(status=status.HTTP_200_OK)
 
 
 class LoginVerifyView(GenericAPIView):
@@ -67,3 +80,15 @@ class SignupVerifyView(GenericAPIView):
         request.user.verify_user()
 
         return Response(serializer.get_token_pair(), status=status.HTTP_200_OK)
+
+
+class ProfileView(RetrieveUpdateDestroyAPIView):
+    serializer_class = ProfileSerializer
+    queryset = CustomUser.objects.all()
+
+    def get_object(self):
+        return get_object_or_404(self.get_queryset(), pk=self.request.user.pk)
+
+    def perform_destroy(self, instance: CustomUser):
+        instance.is_active = False
+        instance.save()

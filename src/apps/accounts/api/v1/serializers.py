@@ -115,3 +115,19 @@ class SignupSerializer(serializers.Serializer):
 
         self._user = CustomUser.objects.create_user(**user_kwargs)
         return self._user
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = (
+            'username', 'email', 'phone',
+            'first_name', 'last_name',
+            'two_fa_enabled', 'two_fa_type',
+            'last_login', 'date_joined',
+        )
+        read_only_fields = (
+            'username', 'email', 'phone',
+            'two_fa_enabled', 'two_fa_type',
+            'last_login', 'date_joined',
+        )

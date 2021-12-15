@@ -6,6 +6,10 @@ from .tokens import VerificationToken
 
 
 class VerificationJWTAuthentication(JWTAuthentication):
+    """Authentication for tokens with type 'verification'
+    used to verificate user via 2FA
+    """
+
     def get_validated_token(self, raw_token):
         try:
             return VerificationToken(raw_token)
