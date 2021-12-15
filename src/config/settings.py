@@ -12,6 +12,8 @@ DEBUG = int(os.environ.get('DEBUG', default=1))
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(' ')
 
 INSTALLED_APPS = [
@@ -77,7 +79,7 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
-        'KEY_PREFIX': 'django'
+        'KEY_PREFIX': 'django',
     }
 }
 
