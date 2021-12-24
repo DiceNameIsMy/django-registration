@@ -2,12 +2,12 @@ version: '3'
 
 services:
   django:
-    build: 
-      context: './src'
+    build:
+      context: './'
       dockerfile: Dockerfile.prod
-    command: poetry run gunicorn config.wsgi:application -c config/gunicorn.conf.py --bind 0.0.0.0:8000
+    entrypoint: /django/entrypoint.prod.sh
     env_file:
-      - ./.env.prod
+      - ./env_conf/.env.prod
     expose:
       - 8000
     volumes:
@@ -17,12 +17,12 @@ services:
       - db
 
   celery:
-    build: 
-      context: './src'
+    build:
+      context: './'
       dockerfile: Dockerfile.prod
     command: poetry run celery --app config worker -l INFO
     env_file:
-      - ./.env.prod
+      - ./env_conf/.env.prod
     depends_on:
       - db
       - redis
@@ -32,8 +32,8 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data/
     env_file:
-      - ./.env.prod.db
-  
+      - ./env_conf/.env.prod.db
+
   redis:
     image: redis:6.2.6-alpine
     ports:
