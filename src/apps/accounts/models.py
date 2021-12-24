@@ -14,7 +14,7 @@ class CustomUser(AbstractUser):
     two_fa_enabled = models.BooleanField(default=False)
     two_fa_type = models.PositiveSmallIntegerField(choices=TwoFAType.choices, null=True, blank=True)
 
-    REQUIRED_FIELDS = ['email', 'phone']
+    REQUIRED_FIELDS = []
 
     class Meta:
         db_table = 'user'
@@ -34,3 +34,31 @@ class CustomUser(AbstractUser):
 
         if save:
             self.save(update_fields=['last_login', 'verified'])
+
+
+class VerificationCode(models.Model):
+    class Type(models.IntegerChoices):
+        SIGN_UP = 1, 'Sign Up'
+        LOG_IN = 2, 'Log In'
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    type = models.PositiveSmallIntegerField(choices=Type.choices)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    valid_until = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        # TODO make indexes
+        db_table = 'verification_code'
+        verbose_name = 'Verification Code'
+        verbose_name_plural = 'Verification Codes'
+
+    def use(self) -> bool:
+        if not self.used:
+            self.used = True
+            self.save(update_fields=['used'])
+            return True
+        else:
+            return False

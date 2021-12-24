@@ -15,12 +15,12 @@ from .views import (
 
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
-    path('login/resend/', ResendVerificationCodeView.as_view(), name='login-resend-code'),
     path('login/verify/', LoginVerifyView.as_view(), name='login-verify'),
 
     path('signup/', SignupView.as_view(), name='signup'),
-    path('signup/resend/', ResendVerificationCodeView.as_view(), name='signup-resend-code'),
     path('signup/verify/', SignupVerifyView.as_view(), name='signup-verify'),
+
+    path('code/resend/', ResendVerificationCodeView.as_view(), name='resend-code'),
 
     path('profile/', ProfileView.as_view(), name='profile'),
     # !idea: require secret question and answer to reset password

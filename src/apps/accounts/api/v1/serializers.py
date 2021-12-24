@@ -1,29 +1,38 @@
-from django.core.cache import caches
-
 from rest_framework import serializers
 
 from rest_framework_simplejwt.serializers import PasswordField
 
-from apps.accounts.models import CustomUser
+from apps.accounts.models import CustomUser, VerificationCode
 from apps.accounts.authentication import get_token_pair, get_verification_token
-
-
-cache = caches['default']
 
 
 class VerifyCodeSerializer(serializers.Serializer):
     """Two factor authentication code serializer"""
 
+    _instance: VerificationCode = None
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    type = serializers.IntegerField()
     code = serializers.IntegerField()
 
     def validate(self, attrs):
-        code = cache.get(attrs['user'].pk)
-
-        if attrs['code'] != code:
+        valid_code_types = VerificationCode.Type.values
+        if attrs['type'] not in valid_code_types:
+            raise serializers.ValidationError(f'Invalid code type. Allowed types: {valid_code_types }')
+        try:
+            self._instance = VerificationCode.objects.get(
+                user=attrs['user'],
+                type=attrs['type'],
+                code=attrs['code'],
+                used=False,
+            )
+        except VerificationCode.DoesNotExist:
             raise serializers.ValidationError('Invalid code')
 
         return attrs
+
+    def use_code(self):
+        assert self.is_valid(), 'Serializer must be valid'
+        self._instance.use()
 
     def get_token_pair(self) -> dict:
         return get_token_pair(self.validated_data['user'])
@@ -121,13 +130,22 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = (
-            'username', 'email', 'phone',
-            'first_name', 'last_name',
-            'two_fa_enabled', 'two_fa_type',
-            'last_login', 'date_joined',
+            'username',
+            'email',
+            'phone',
+            'first_name',
+            'last_name',
+            'two_fa_enabled',
+            'two_fa_type',
+            'last_login',
+            'date_joined',
         )
         read_only_fields = (
-            'username', 'email', 'phone',
-            'two_fa_enabled', 'two_fa_type',
-            'last_login', 'date_joined',
+            'username',
+            'email',
+            'phone',
+            'two_fa_enabled',
+            'two_fa_type',
+            'last_login',
+            'date_joined',
         )

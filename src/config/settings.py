@@ -74,14 +74,7 @@ DATABASES = {
 
 REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1')
 REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
-        'KEY_PREFIX': 'django',
-    }
-}
+REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
@@ -120,7 +113,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }
-
+# JWT token type to communicate with users that can only send vericifation code
 VERIFICATION_TOKEN_TYPE = 'verification'
 VERIFICATION_CODE_LIFETIME = timedelta(minutes=5)
 
