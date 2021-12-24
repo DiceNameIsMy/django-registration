@@ -35,8 +35,10 @@ def resend_verification_code(user_id: int, code_type: int) -> bool:
     return send_verification_code(user, code_type)
 
 
+# TODO implement sending verification code with
+# differend templates according to the code type
 def send_verification_code(user: CustomUser, type: int) -> bool:
-    """Try to send verification code to user via this 2fa method"""
+    """Try to send verification code to user via his 2fa method"""
     if user.two_fa_enabled is False:
         return False
 

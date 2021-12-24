@@ -7,7 +7,7 @@ from apps.accounts.authentication import get_token_pair, get_verification_token
 
 
 class VerifyCodeSerializer(serializers.Serializer):
-    """Two factor authentication code serializer"""
+    """Verify code that was being sent to users contact address"""
 
     _instance: VerificationCode = None
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -82,12 +82,12 @@ class SignupSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError('Email already exists')
+            raise serializers.ValidationError('Email is already used')
         return value
 
     def validate_phone(self, value):
         if CustomUser.objects.filter(phone=value).exists():
-            raise serializers.ValidationError('Phone already exists')
+            raise serializers.ValidationError('Phone is already used')
         return value
 
     def validate(self, attrs):
@@ -112,15 +112,12 @@ class SignupSerializer(serializers.Serializer):
             'two_fa_enabled': True,
             **kwargs,
         }
-        if self.validated_data.get('email'):
-            user_kwargs['email'] = self.validated_data['email']
-        if self.validated_data.get('phone'):
-            user_kwargs['phone'] = self.validated_data['phone']
-
-        if 'email' in user_kwargs:
-            user_kwargs['two_fa_type'] = CustomUser.TwoFAType.EMAIL
-        elif 'phone' in user_kwargs:
+        if phone := self.validated_data.get('phone'):
+            user_kwargs['phone'] = phone
             user_kwargs['two_fa_type'] = CustomUser.TwoFAType.PHONE
+        if email := self.validated_data.get('email'):
+            user_kwargs['email'] = email
+            user_kwargs['two_fa_type'] = CustomUser.TwoFAType.EMAIL
 
         self._user = CustomUser.objects.create_user(**user_kwargs)
         return self._user

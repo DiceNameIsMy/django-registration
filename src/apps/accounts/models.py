@@ -42,8 +42,8 @@ class VerificationCode(models.Model):
         LOG_IN = 2, 'Log In'
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    code = models.CharField(max_length=6)
     type = models.PositiveSmallIntegerField(choices=Type.choices)
+    code = models.CharField(max_length=6)
 
     created_at = models.DateTimeField(auto_now_add=True)
     valid_until = models.DateTimeField()

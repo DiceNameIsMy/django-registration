@@ -75,8 +75,6 @@ class SignupVerifyView(GenericAPIView):
         return Response(serializer.get_token_pair(), status=status.HTTP_200_OK)
 
 
-# TODO implement sending verification code with
-# differend templates according to the code type
 class ResendVerificationCodeView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (VerificationJWTAuthentication,)
