@@ -26,8 +26,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'apps.accounts',
-    'apps.utils',
+    'accounts',
+    'utils',
 ]
 
 MIDDLEWARE = [
@@ -91,8 +91,6 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Almaty'
 
 USE_I18N = True
-
-USE_L10N = True
 
 USE_TZ = True
 

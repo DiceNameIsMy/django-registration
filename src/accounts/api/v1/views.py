@@ -5,9 +5,9 @@ from rest_framework.generics import GenericAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from apps.accounts.authentication import VerificationJWTAuthentication
-from apps.accounts.models import CustomUser
-from apps.accounts.tasks import (
+from accounts.authentication import VerificationJWTAuthentication
+from accounts.models import CustomUser
+from accounts.tasks import (
     send_sign_up_verification_code,
     send_log_in_verification_code,
     resend_verification_code

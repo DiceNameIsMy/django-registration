@@ -2,8 +2,8 @@ from rest_framework import serializers
 
 from rest_framework_simplejwt.serializers import PasswordField
 
-from apps.accounts.models import CustomUser, VerificationCode
-from apps.accounts.authentication import get_token_pair, get_verification_token
+from accounts.models import CustomUser, VerificationCode
+from accounts.authentication import get_token_pair, get_verification_token
 
 
 class VerifyCodeSerializer(serializers.Serializer):
