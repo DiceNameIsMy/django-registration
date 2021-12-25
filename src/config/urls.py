@@ -7,7 +7,7 @@ urlpatterns = [
         path('health/', include('utils.health.urls')),
 
         path('v1/', include([
-            path('accounts/', include('accounts.api.v1.urls')),
+            path('accounts/', include('accounts.api.v1.urls', namespace='v1')),
         ])),
     ])),
 ]

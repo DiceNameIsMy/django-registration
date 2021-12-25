@@ -13,6 +13,7 @@ from .views import (
     ProfileView,
 )
 
+app_name = 'accounts'
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('login/verify/', LoginVerifyView.as_view(), name='login-verify'),

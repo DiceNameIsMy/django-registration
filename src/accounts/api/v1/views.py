@@ -6,14 +6,16 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from accounts.authentication import VerificationJWTAuthentication
-from accounts.models import CustomUser
-from accounts.tasks import (
-    send_sign_up_verification_code,
-    send_log_in_verification_code,
-    resend_verification_code
-)
+from accounts.models import CustomUser, VerificationCode
+from accounts.tasks import send_verification_code
 
-from .serializers import LoginSerializer, ProfileSerializer, VerifyCodeSerializer, SignupSerializer
+from .serializers import (
+    LoginSerializer,
+    ProfileSerializer,
+    ResendVerificationCodeSerializer,
+    VerifyCodeSerializer,
+    SignupSerializer,
+)
 
 
 class LoginView(GenericAPIView):
@@ -25,16 +27,26 @@ class LoginView(GenericAPIView):
         user = serializer.get_user()
 
         if user.two_fa_enabled:
-            send_log_in_verification_code.delay(user.pk)
-            return Response(serializer.get_verification_token(), status=status.HTTP_201_CREATED)
+            token = serializer.get_verification_token()
+            send_verification_code.delay(user.pk, token['jti'], VerificationCode.Type.LOG_IN)
+            return Response(
+                data={
+                    'method': user.two_fa_type,
+                    'verification': str(token),
+                },
+                status=status.HTTP_201_CREATED,
+            )
         else:
             update_last_login(None, user)
-            return Response(serializer.get_token_pair(), status=status.HTTP_200_OK)
+            return Response(
+                data=serializer.get_token_pair(),
+                status=status.HTTP_200_OK,
+            )
 
 
 class LoginVerifyView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
-    authentication_classes = (VerificationJWTAuthentication, )
+    authentication_classes = (VerificationJWTAuthentication,)
 
     serializer_class = VerifyCodeSerializer
 
@@ -55,13 +67,21 @@ class SignupView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        send_sign_up_verification_code.delay(user.pk)
-        return Response(serializer.get_verification_token(), status=status.HTTP_201_CREATED)
+        token = serializer.get_verification_token()
+
+        send_verification_code.delay(user.pk, token['jti'], VerificationCode.Type.SIGN_UP)
+        return Response(
+            data={
+                'method': user.two_fa_type,
+                'verification': str(token),
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class SignupVerifyView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
-    authentication_classes = (VerificationJWTAuthentication, )
+    authentication_classes = (VerificationJWTAuthentication,)
 
     serializer_class = VerifyCodeSerializer
 
@@ -70,6 +90,8 @@ class SignupVerifyView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.use_code()
 
+        # also updates last_login
+        # TODO refactor this line
         request.user.verify_user()
 
         return Response(serializer.get_token_pair(), status=status.HTTP_200_OK)
@@ -79,11 +101,14 @@ class ResendVerificationCodeView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     authentication_classes = (VerificationJWTAuthentication,)
 
-    def post(self, request):
-        # TODO check if user can ask to resend code
+    serializer_class = ResendVerificationCodeSerializer
 
-        resend_verification_code.delay(request.user.pk)
-        return Response(status=status.HTTP_200_OK)
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        send_verification_code.delay(request.user.pk, request.auth['jti'], serializer.validated_data['type'])
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class ProfileView(RetrieveUpdateDestroyAPIView):

@@ -35,9 +35,5 @@ def get_token_pair(user) -> dict:
     }
 
 
-def get_verification_token(user) -> dict:
-    token = VerificationToken.for_user(user)
-    return {
-        'method': user.two_fa_type,
-        'verfication': str(token),
-    }
+def get_verification_token(user) -> VerificationToken:
+    return VerificationToken.for_user(user)

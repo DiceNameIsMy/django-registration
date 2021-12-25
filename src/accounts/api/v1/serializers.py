@@ -4,6 +4,17 @@ from rest_framework_simplejwt.serializers import PasswordField
 
 from accounts.models import CustomUser, VerificationCode
 from accounts.authentication import get_token_pair, get_verification_token
+from accounts.tokens import VerificationToken
+
+
+class CurrentJTIDefault:
+    requires_context = True
+
+    def __call__(self, serializer_field):
+        return serializer_field.context['request'].auth['jti']
+
+    def __repr__(self):
+        return '%s()' % self.__class__.__name__
 
 
 class VerifyCodeSerializer(serializers.Serializer):
@@ -11,19 +22,21 @@ class VerifyCodeSerializer(serializers.Serializer):
 
     _instance: VerificationCode = None
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    jwt_jti = serializers.HiddenField(default=CurrentJTIDefault())
+
     type = serializers.IntegerField()
     code = serializers.IntegerField()
 
     def validate(self, attrs):
-        valid_code_types = VerificationCode.Type.values
-        if attrs['type'] not in valid_code_types:
-            raise serializers.ValidationError(f'Invalid code type. Allowed types: {valid_code_types }')
+        if attrs['type'] not in (valid_code_types := VerificationCode.Type.values):
+            raise serializers.ValidationError(f'Invalid code type. Allowed types: {valid_code_types}')
         try:
             self._instance = VerificationCode.objects.get(
                 user=attrs['user'],
                 type=attrs['type'],
                 code=attrs['code'],
-                used=False,
+                is_used=False,
+                jwt_jti=attrs['jwt_jti'],
             )
         except VerificationCode.DoesNotExist:
             raise serializers.ValidationError('Invalid code')
@@ -31,7 +44,7 @@ class VerifyCodeSerializer(serializers.Serializer):
         return attrs
 
     def use_code(self):
-        assert self.is_valid(), 'Serializer must be valid'
+        assert not hasattr(self, '_validated_data'), '`.is_valid()` must be called before `.use_code()`'
         self._instance.use()
 
     def get_token_pair(self) -> dict:
@@ -46,12 +59,13 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         self._user: CustomUser = CustomUser.objects.filter(username=attrs['username']).first()
-
         if (self._user is None) or (not self._user.check_password(attrs['password'])):
             raise serializers.ValidationError('Invalid username or password')
 
         if not self._user.is_active:
             raise serializers.ValidationError('Account is not active')
+        if not self._user.is_verified:
+            raise serializers.ValidationError('Account is not verified')
 
         return attrs
 
@@ -61,7 +75,7 @@ class LoginSerializer(serializers.Serializer):
     def get_token_pair(self) -> dict:
         return get_token_pair(self._user)
 
-    def get_verification_token(self) -> dict:
+    def get_verification_token(self) -> VerificationToken:
         return get_verification_token(self._user)
 
 
@@ -99,10 +113,7 @@ class SignupSerializer(serializers.Serializer):
 
         return attrs
 
-    def get_token_pair(self) -> dict:
-        return get_token_pair(self._user)
-
-    def get_verification_token(self) -> dict:
+    def get_verification_token(self) -> VerificationToken:
         return get_verification_token(self._user)
 
     def save(self, **kwargs) -> CustomUser:
@@ -121,6 +132,17 @@ class SignupSerializer(serializers.Serializer):
 
         self._user = CustomUser.objects.create_user(**user_kwargs)
         return self._user
+
+
+class ResendVerificationCodeSerializer(serializers.Serializer):
+    type = serializers.IntegerField()
+
+    def validate_type(self, value):
+        # TODO check if user can ask to resend code
+        valid_code_types = VerificationCode.Type.values
+        if value not in valid_code_types:
+            raise serializers.ValidationError(f'Invalid code type. Allowed types: {valid_code_types}')
+        return value
 
 
 class ProfileSerializer(serializers.ModelSerializer):

@@ -1,6 +1,3 @@
-from random import randint
-
-from django.utils import timezone
 from django.conf import settings
 
 from .models import VerificationCode, CustomUser
@@ -8,42 +5,43 @@ from .models import VerificationCode, CustomUser
 
 class VerificationCodeSender:
     dummy: bool = settings.DUMMY_CODE_SENDER
+    _verification_code: VerificationCode = None
 
-    def __init__(self, user: CustomUser, code_type: int):
-        self.user = user
-        self.code = self.create_code(code_type)
+    def __init__(self, user: CustomUser, jti: str, code_type: int):
+        self.user: CustomUser = user
+        self.jti: str = jti
+        self.code_type: int = code_type
+        self.sending_method: int = self.user.two_fa_type
 
-        self.sending_method = self.user.two_fa_type
+    @property
+    def verification_code(self) -> VerificationCode:
+        if self._verification_code is None:
+            self._verification_code = VerificationCode.objects.create_for_user(
+                self.user,
+                self.jti,
+                self.code_type,
+            )
+        return self._verification_code
 
     def send(self):
         """Send verification code to user"""
         if self.dummy:
-            self.send_dummy_code()
+            self._send_dummy_code()
         elif self.user.two_fa_type == CustomUser.TwoFAType.EMAIL:
-            self.send_email_code()
+            self._send_email_code()
         elif self.user.two_fa_type == CustomUser.TwoFAType.PHONE:
-            self.send_phone_code()
-
-    def create_code(self, code_type) -> VerificationCode:
-        code = randint(100000, 999999)
-        valid_until = timezone.now() + settings.VERIFICATION_CODE_LIFETIME
-        return VerificationCode.objects.create(
-            user=self.user,
-            code=str(code),
-            type=code_type,
-            valid_until=valid_until,
-        )
+            self._send_phone_code()
 
     # TODO load message template from settings
-    def send_email_code(self):
+    def _send_email_code(self):
         self.user.email_user(
-            f'Verification code is: {self.code.code}',
+            f'Verification code is: {self.verification_code.code}',
             '',
         )
 
-    def send_phone_code(self):
-        self.user.sms_user(f'Verification code is: {self.code.code}')
+    def _send_phone_code(self):
+        self.user.sms_user(f'Verification code is: {self.verification_code.code}')
 
-    def send_dummy_code(self):
+    def _send_dummy_code(self):
         print(f"Sending dummy code to {self.user.username}")
-        print(f"Dummy code is: {self.code.code}")
+        print(f"Dummy code is: {self.verification_code.code}")

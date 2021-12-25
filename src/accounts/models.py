@@ -1,6 +1,10 @@
+from random import randint
+
 from django.contrib.auth.models import AbstractUser
-from django.db import models
 from django.utils import timezone
+from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.conf import settings
 
 
 class CustomUser(AbstractUser):
@@ -10,7 +14,7 @@ class CustomUser(AbstractUser):
 
     phone = models.CharField(max_length=20, blank=True)
 
-    verified = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
     two_fa_enabled = models.BooleanField(default=False)
     two_fa_type = models.PositiveSmallIntegerField(choices=TwoFAType.choices, null=True, blank=True)
 
@@ -30,10 +34,24 @@ class CustomUser(AbstractUser):
 
     def verify_user(self, save: bool = True):
         self.last_login = timezone.now()
-        self.verified = True
+        self.is_verified = True
 
         if save:
-            self.save(update_fields=['last_login', 'verified'])
+            self.save(update_fields=['last_login', 'is_verified'])
+
+
+class VerificationCodeManager(models.Manager):
+    def create_for_user(self, user: CustomUser, jti: str, code_type: int):
+        """Create verification code for user"""
+        code = str(randint(100000, 999999))
+        valid_until = timezone.now() + settings.VERIFICATION_CODE_LIFETIME
+        return self.create(
+            user=user,
+            code=code,
+            jwt_jti=jti,
+            type=code_type,
+            valid_until=valid_until,
+        )
 
 
 class VerificationCode(models.Model):
@@ -43,11 +61,19 @@ class VerificationCode(models.Model):
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     type = models.PositiveSmallIntegerField(choices=Type.choices)
-    code = models.CharField(max_length=6)
+    code = models.PositiveIntegerField(
+        validators=(MaxValueValidator(999999), MinValueValidator(100000)),
+    )
+    # JWT JTI is stored to keep verf code and client paired
+    # it's done to prevent same user but
+    # different client from using the same code
+    jwt_jti = models.CharField(max_length=32)
 
     created_at = models.DateTimeField(auto_now_add=True)
     valid_until = models.DateTimeField()
-    used = models.BooleanField(default=False)
+    is_used = models.BooleanField(default=False)
+
+    objects = VerificationCodeManager()
 
     class Meta:
         # TODO make indexes
@@ -56,9 +82,9 @@ class VerificationCode(models.Model):
         verbose_name_plural = 'Verification Codes'
 
     def use(self) -> bool:
-        if not self.used:
-            self.used = True
-            self.save(update_fields=['used'])
+        if not self.is_used:
+            self.is_used = True
+            self.save(update_fields=['is_used'])
             return True
         else:
             return False
