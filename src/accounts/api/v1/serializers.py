@@ -44,7 +44,7 @@ class VerifyCodeSerializer(serializers.Serializer):
         return attrs
 
     def use_code(self):
-        assert not hasattr(self, '_validated_data'), '`.is_valid()` must be called before `.use_code()`'
+        assert hasattr(self, '_validated_data'), '`.is_valid()` must be called before `.use_code()`'
         self._instance.use()
 
     def get_token_pair(self) -> dict:
