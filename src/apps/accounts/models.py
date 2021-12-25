@@ -26,7 +26,7 @@ class CustomUser(AbstractUser):
 
     def sms_user(self, message):
         """Send SMS to user"""
-        # TODO: Implement
+        raise NotImplementedError('SMS sending is not implemented')
 
     def verify_user(self, save: bool = True):
         self.last_login = timezone.now()

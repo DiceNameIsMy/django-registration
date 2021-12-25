@@ -113,10 +113,14 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'UPDATE_LAST_LOGIN': True,
 }
-# JWT token type to communicate with users that can only send vericifation code
-VERIFICATION_TOKEN_TYPE = 'verification'
+
+# token type to communicate with users that can only send vericifation code
+VERIFICATION_TOKEN_LIFETIME = timedelta(minutes=15)
 VERIFICATION_CODE_LIFETIME = timedelta(minutes=5)
+
+DUMMY_CODE_SENDER = bool(int(os.environ.get('DUMMY_CODE_SENDER', 1)))
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -23,7 +23,9 @@ urlpatterns = [
     path('code/resend/', ResendVerificationCodeView.as_view(), name='resend-code'),
 
     path('profile/', ProfileView.as_view(), name='profile'),
-    # !idea: require secret question and answer to reset password
+    # path('profile/2fa/', ProfileView.as_view(), name='2fa-settings'),
+    # path('profile/change-password/', ProfileView.as_view(), name='chage-password'),
+    # path('profile/reset-password/', ProfileView.as_view(), name='reset-password'),
 
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
