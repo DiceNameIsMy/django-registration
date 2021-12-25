@@ -4,7 +4,7 @@ services:
   django:
     build:
       context: ./
-      dockerfile: Dockerfile.prod
+      dockerfile: docker/Dockerfile.prod
     entrypoint: /django/entrypoint.prod.sh
     env_file:
       - env_conf/.prod.env
@@ -19,7 +19,7 @@ services:
   celery:
     build:
       context: ./
-      dockerfile: Dockerfile.prod
+      dockerfile: docker/Dockerfile.prod
     command: poetry run celery --app config worker -l INFO
     env_file:
       - env_conf/.prod.env

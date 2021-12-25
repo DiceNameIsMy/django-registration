@@ -4,7 +4,7 @@ services:
   django:
     build:
       context: ./
-      dockerfile: Dockerfile.dev
+      dockerfile: docker/Dockerfile.dev
     entrypoint: /django/entrypoint.dev.sh
     ports:
       - 8000:8000
@@ -16,7 +16,7 @@ services:
   celery:
     build:
       context: ./
-      dockerfile: Dockerfile.dev
+      dockerfile: docker/Dockerfile.dev
     command: poetry run celery --app config worker -l INFO
     env_file:
       - ./env_conf/.dev.env
