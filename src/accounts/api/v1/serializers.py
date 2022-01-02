@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from rest_framework_simplejwt.serializers import PasswordField
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 
 from accounts.models import CustomUser, VerificationCode
 from accounts.authentication import get_token_pair, get_verification_token
@@ -60,12 +61,12 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         self._user: CustomUser = CustomUser.objects.filter(username=attrs['username']).first()
         if (self._user is None) or (not self._user.check_password(attrs['password'])):
-            raise serializers.ValidationError('Invalid username or password')
+            raise AuthenticationFailed('Invalid username or password')
 
         if not self._user.is_active:
-            raise serializers.ValidationError('Account is not active')
+            raise AuthenticationFailed('Account is not active')
         if not self._user.is_verified:
-            raise serializers.ValidationError('Account is not verified')
+            raise AuthenticationFailed('Account is not verified')
 
         return attrs
 
