@@ -12,7 +12,8 @@ class CustomUser(AbstractUser):
         EMAIL = 1, 'Email'
         PHONE = 2, 'Phone'
 
-    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(unique=True, blank=True, null=True)
+    phone = models.CharField(unique=True, max_length=20, blank=True, null=True)
 
     is_verified = models.BooleanField(default=False)
     two_fa_enabled = models.BooleanField(default=False)
@@ -27,6 +28,13 @@ class CustomUser(AbstractUser):
 
     def __str__(self) -> str:
         return self.username
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.phone:
+            self.phone = None
+        if not self.email:
+            self.email = None
+        return super().save(*args, **kwargs)
 
     def sms_user(self, message):
         """Send SMS to user"""
